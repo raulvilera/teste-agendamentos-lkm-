@@ -1,0 +1,1690 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AGENDAMENTO DE APARELHOS</title>
+  <style>
+    /* Todo o CSS existente foi preservado */
+    :root {
+      --azul-escuro: #0a2463;
+      --azul-medio: #3e92cc;
+      --azul-claro: #d6eaff;
+      --verde: #4caf50;
+      --vermelho: #f44336;
+      --cinza-escuro: #333;
+      --cinza-claro: #f5f5f5;
+      --branco: #ffffff;
+      --branco-brilhante: rgba(255, 255, 255, 0.9);
+      --verde-disponivel: #2ecc71;
+      --azul-agendado: #3498db;
+      --azul-selecionado: #1a5276;
+      --fundo-cinza: #f0f0f0;
+      --entregue: #d4edda;
+      --nao-entregue: #f8d7da;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(to bottom, var(--azul-escuro) 0%, var(--azul-escuro) 50%, #111 50%, #111 100%);
+      color: var(--cinza-claro);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    h2 {
+      color: var(--branco);
+      margin-bottom: 20px;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    h3 {
+      color: #000000;
+      margin: 0.4cm 0;
+      text-align: center;
+      text-transform: uppercase;
+      font-size: 0.9em;
+    }
+
+    .container {
+      display: flex;
+      gap: 30px;
+      flex-wrap: wrap;
+    }
+
+    .form-container {
+      flex: 1;
+      min-width: 300px;
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      color: var(--cinza-escuro);
+    }
+
+    .calendar-container {
+      flex: 1;
+      min-width: 300px;
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      color: var(--cinza-escuro);
+    }
+
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+      flex: 1;
+      min-width: 220px;
+      position: relative;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--azul-escuro);
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid var(--branco-brilhante);
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      background-color: var(--branco);
+    }
+
+    .form-group input[type="time"] {
+      width: 120px;
+      padding: 8px 10px;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--azul-medio);
+      box-shadow: 0 0 0 3px rgba(62, 146, 204, 0.2);
+      outline: none;
+    }
+
+    /* Estilo para dropdown com cores alternadas */
+    .form-group select option:nth-child(odd) {
+      background-color: var(--azul-claro);
+    }
+    
+    .form-group select option:nth-child(even) {
+      background-color: var(--branco);
+    }
+
+    .calendar {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      margin-bottom: 0.4cm;
+    }
+
+    .calendar th,
+    .calendar td {
+      width: 40px;
+      height: 40px;
+      text-align: center;
+      vertical-align: middle;
+      border: 1px solid var(--branco-brilhante);
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      background-color: var(--branco);
+      padding: 10px;
+    }
+
+    .calendar th {
+      background-color: var(--azul-claro);
+      border: 1px solid var(--branco-brilhante);
+    }
+
+    .calendar td.disponivel {
+      background-color: var(--verde-disponivel);
+      color: white;
+      cursor: default;
+      border: 1px solid var(--branco-brilhante);
+    }
+
+    .calendar td.agendado {
+      background-color: var(--azul-agendado);
+      color: white;
+      border: 1px solid var(--branco-brilhante);
+      cursor: default;
+    }
+
+    .calendar td.selecionado {
+      background-color: var(--azul-selecionado);
+      color: white;
+      font-weight: bold;
+      border: 1px solid var(--branco-brilhante);
+      cursor: default;
+    }
+
+    .calendar td.indisponivel {
+      background-color: #ccc;
+      cursor: not-allowed;
+      color: #666;
+      border: 1px solid var(--branco-brilhante);
+    }
+
+    .calendar td:hover:not(.indisponivel) {
+      opacity: 0.8;
+    }
+
+    /* Estilos para a tabela de histórico */
+    .historico-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .historico-table th,
+    .historico-table td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      font-size: 0.8em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .historico-table th {
+      background-color: var(--azul-claro);
+      color: #000;
+      font-weight: bold;
+    }
+
+    .historico-table td {
+      color: #000;
+    }
+
+    .historico-table tr.excluido td {
+      color: var(--vermelho);
+    }
+
+    .historico-table tr.entregue {
+      background-color: var(--entregue);
+    }
+
+    .historico-table tr.nao-entregue {
+      background-color: var(--nao-entregue);
+    }
+
+    /* Definindo larguras específicas para cada coluna */
+    .historico-table th:nth-child(1),
+    .historico-table td:nth-child(1) {
+      width: 15%;
+    }
+
+    .historico-table th:nth-child(2),
+    .historico-table td:nth-child(2) {
+      width: 15%;
+    }
+
+    .historico-table th:nth-child(3),
+    .historico-table td:nth-child(3) {
+      width: 25%;
+    }
+
+    .historico-table th:nth-child(4),
+    .historico-table td:nth-child(4) {
+      width: 20%;
+    }
+
+    .historico-table th:nth-child(5),
+    .historico-table td:nth-child(5) {
+      width: 10%;
+    }
+
+    .historico-table th:nth-child(6),
+    .historico-table td:nth-child(6) {
+      width: 15%;
+    }
+
+    /* Estilos para os botões */
+    .buttons-container {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-cadastrar {
+      background-color: var(--azul-medio);
+      color: white;
+    }
+
+    .btn-cadastrar:hover {
+      background-color: #2c7ebd;
+    }
+
+    .btn-cadastrar:active {
+      box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-limpar {
+      background-color: #f0f0f0;
+      color: #333;
+    }
+
+    .btn-limpar:hover {
+      background-color: #e0e0e0;
+    }
+
+    .btn-limpar:active {
+      box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-excluir {
+      background-color: var(--vermelho);
+      color: white;
+    }
+
+    .btn-excluir:hover {
+      background-color: #d32f2f;
+    }
+
+    .btn-excluir:active {
+      box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Estilos para o calendário pop-up */
+    .datepicker-container {
+      position: relative;
+    }
+
+    .datepicker-popup {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      z-index: 1000;
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      width: 300px;
+    }
+
+    .datepicker-popup.active {
+      display: block;
+    }
+
+    .datepicker-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .datepicker-nav {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    .datepicker-title {
+      font-weight: bold;
+    }
+
+    .datepicker-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+    }
+
+    .datepicker-weekday {
+      text-align: center;
+      font-weight: bold;
+      padding: 5px;
+    }
+
+    .datepicker-day {
+      text-align: center;
+      padding: 5px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .datepicker-day:hover {
+      background-color: var(--azul-claro);
+    }
+
+    .datepicker-day.selected {
+      background-color: var(--azul-medio);
+      color: white;
+    }
+
+    .datepicker-day.disabled {
+      color: #ccc;
+      cursor: not-allowed;
+    }
+
+    .datepicker-today {
+      font-weight: bold;
+    }
+
+    .datepicker-other-month {
+      color: #aaa;
+    }
+
+    .datepicker-input {
+      cursor: pointer;
+    }
+
+    .conflict-message {
+      color: var(--vermelho);
+      font-weight: bold;
+      margin-top: 10px;
+      text-align: center;
+      display: none;
+    }
+    
+    .loading-indicator {
+      display: none;
+      text-align: center;
+      margin: 10px 0;
+      color: var(--azul-escuro);
+      font-weight: bold;
+    }
+
+    /* Novos estilos para a seleção de aulas */
+    .aulas-container {
+      margin-top: 15px;
+    }
+
+    .periodo-aulas {
+      margin-bottom: 15px;
+      padding: 10px;
+      background-color: var(--azul-claro);
+      border-radius: 8px;
+    }
+
+    .periodo-title {
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: var(--azul-escuro);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .aulas-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .aula-option {
+      padding: 8px 12px;
+      background-color: var(--branco);
+      border: 1px solid var(--azul-medio);
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.85em;
+    }
+
+    .aula-option:hover {
+      background-color: var(--azul-claro);
+    }
+
+    .aula-option.selected {
+      background-color: var(--azul-medio);
+      color: white;
+      border-color: var(--azul-escuro);
+    }
+
+    .selected-aulas {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: var(--fundo-cinza);
+      border-radius: 8px;
+    }
+
+    .selected-aulas-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: var(--azul-escuro);
+    }
+
+    .selected-aulas-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .selected-aula {
+      padding: 5px 10px;
+      background-color: var(--azul-medio);
+      color: white;
+      border-radius: 15px;
+      font-size: 0.8em;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .selected-aula:hover {
+      background-color: var(--azul-escuro);
+    }
+
+    /* Botão para selecionar todas as aulas */
+    .select-all-btn {
+      padding: 5px 10px;
+      background-color: var(--azul-escuro);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.8em;
+    }
+
+    .select-all-btn:hover {
+      background-color: var(--azul-selecionado);
+    }
+
+    /* Estilos para ícones de ação */
+    .action-icons {
+      display: flex;
+      gap: 5px;
+      justify-content: center;
+    }
+
+    .action-icon {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      border-radius: 3px;
+      padding: 2px;
+      transition: all 0.2s;
+    }
+
+    .edit-icon {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .edit-icon:hover {
+      background-color: #45a049;
+    }
+
+    .delete-icon {
+      background-color: #f44336;
+      color: white;
+    }
+
+    .delete-icon:hover {
+      background-color: #da190b;
+    }
+
+    /* Estilos para modal de edição */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.4);
+    }
+
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto;
+      padding: 20px;
+      border: none;
+      border-radius: 10px;
+      width: 80%;
+      max-width: 500px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .close:hover,
+    .close:focus {
+      color: black;
+    }
+
+    .modal h3 {
+      color: var(--azul-escuro);
+      margin-bottom: 15px;
+    }
+
+    .modal .form-group {
+      margin-bottom: 15px;
+    }
+
+    .modal .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: var(--azul-escuro);
+    }
+
+    .modal .form-group input,
+    .modal .form-group select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+
+    .btn-modal {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-save {
+      background-color: var(--azul-medio);
+      color: white;
+    }
+
+    .btn-cancel {
+      background-color: #ccc;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h2>AGENDAMENTO DE APARELHOS</h2>
+  <div class="container">
+    <div class="form-container">
+      <div class="form-row">
+        <div class="form-group">
+          <label>PROFESSOR:</label>
+          <select id="professor" onchange="atualizarEmail(); carregarAulasProfessor();">
+            <option>Selecione</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>EMAIL:</label>
+          <input type="email" id="email-professor" readonly>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>APARELHO:</label>
+          <select id="aparelho" onchange="atualizarMarca()">
+            <option value="">Selecione</option>
+            <option value="TABLET">TABLET</option>
+            <option value="SMARTPHONE">SMARTPHONE</option>
+            <option value="CHROMEBOOK">CHROMEBOOK</option>
+            <option value="NOTEBOOK">NOTEBOOK</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>MARCA:</label>
+          <input type="text" id="marca" readonly>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>N° DE APARELHOS:</label>
+          <input type="number" id="numero-aparelhos" min="1" value="1">
+        </div>
+        
+        <div class="form-group datepicker-container">
+          <label>DATA:</label>
+          <input type="text" id="data-selecionada" class="datepicker-input" readonly placeholder="Clique para selecionar">
+          <div class="datepicker-popup" id="datepickerPopup">
+            <div class="datepicker-header">
+              <button class="datepicker-nav" id="prevMonth">&lt;</button>
+              <div class="datepicker-title" id="datepickerMonthYear"></div>
+              <button class="datepicker-nav" id="nextMonth">&gt;</button>
+            </div>
+            <div class="datepicker-grid" id="datepickerWeekdays"></div>
+            <div class="datepicker-grid" id="datepickerDays"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group" onclick="abrirRelogio('hora-retirada')" style="cursor: pointer;">
+          <label for="hora-retirada">RETIRADA:</label>
+          <input type="time" id="hora-retirada" required>
+        </div>
+        <div class="form-group" onclick="abrirRelogio('hora-entrega')" style="cursor: pointer;">
+          <label for="hora-entrega">ENTREGA:</label>
+          <input type="time" id="hora-entrega">
+        </div>
+      </div>
+
+      <!-- Área de seleção de aulas modificada -->
+      <div class="form-group">
+        <label>AULAS DISPONÍVEIS:</label>
+        <div class="loading-indicator" id="aulaLoading">Carregando horários...</div>
+        <div id="aulasProfessorContainer" class="aulas-container">
+          <!-- As aulas serão carregadas dinamicamente aqui -->
+        </div>
+        <div id="selectedAulasContainer" class="selected-aulas" style="display: none;">
+          <div class="selected-aulas-title">Aulas selecionadas:</div>
+          <div id="selectedAulasList" class="selected-aulas-list"></div>
+        </div>
+      </div>
+
+      <div class="conflict-message" id="conflictMessage">
+        Já existe um agendamento para esta data e aula!
+      </div>
+
+      <div class="buttons-container">
+        <button class="btn btn-cadastrar" onclick="cadastrarAgendamento()">CADASTRAR</button>
+        <button class="btn btn-limpar" onclick="limparFormulario()">LIMPAR</button>
+      </div>
+    </div>
+
+    <div class="calendar-container">
+      <div style="margin-bottom: 20px;">
+        <select id="monthSelect"></select>
+        <select id="yearSelect"></select>
+      </div>
+
+      <table class="calendar">
+        <thead>
+          <tr>
+            <th>Dom</th>
+            <th>Seg</th>
+            <th>Ter</th>
+            <th>Qua</th>
+            <th>Qui</th>
+            <th>Sex</th>
+            <th>Sáb</th>
+          </tr>
+        </thead>
+        <tbody id="calendarBody">
+          <!-- Dias serão inseridos via JavaScript -->
+        </tbody>
+      </table>
+
+      <h3>HISTÓRICO DE AGENDAMENTOS</h3>
+      <table class="historico-table">
+        <thead>
+          <tr>
+            <th>DATA</th>
+            <th>N° APARELHOS</th>
+            <th>APARELHO</th>
+            <th>PROFESSOR</th>
+            <th>ENTREGA</th>
+            <th>AÇÃO</th>
+          </tr>
+        </thead>
+        <tbody id="historico-body">
+          <!-- Histórico dinâmico -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal de edição -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3>Editar Agendamento</h3>
+      <div class="form-group">
+        <label>Data:</label>
+        <input type="date" id="editData">
+      </div>
+      <div class="form-group">
+        <label>N° de Aparelhos:</label>
+        <input type="number" id="editNumAparelhos" min="1">
+      </div>
+      <div class="form-group">
+        <label>Aparelho:</label>
+        <select id="editAparelho">
+          <option value="TABLET">TABLET</option>
+          <option value="SMARTPHONE">SMARTPHONE</option>
+          <option value="CHROMEBOOK">CHROMEBOOK</option>
+          <option value="NOTEBOOK">NOTEBOOK</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Professor:</label>
+        <input type="text" id="editProfessor">
+      </div>
+      <div class="form-group">
+        <label>Aulas:</label>
+        <input type="text" id="editAulas">
+      </div>
+      <div class="modal-buttons">
+        <button class="btn-modal btn-save" onclick="salvarEdicao()">Salvar</button>
+        <button class="btn-modal btn-cancel" onclick="fecharModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Dados dos professores
+    const teacherEmails = {
+      "ADEMAR RIBEIRO DE SOUZA": "ademarribeirosouza@prof.educacao.sp.gov.br",
+      "ALEX LUTH PEREIRA MARANHAO": "luth@prof.educacao.sp.gov.br",
+      "ALEXANDRE SILVA LIMA": "alexandresilvalima@prof.educacao.sp.gov.br",
+      "ALEXSANDRA PAULA VARELLA DE SOUZA": "avarella@prof.educacao.sp.gov.br",
+      "ALINE CARDOSO": "aline.cardoso@servidor.educacao.sp.gov.br",
+      "ALISON VASCONCELOS BESERRA": "alisonv@prof.educacao.sp.gov.br",
+      "AMAURI TEODORO DE OLIVEIRA": "amaurit@prof.educacao.sp.gov.br",
+      "ANA PAULA DE OLIVEIRA SILVA": "anapaulaoliveirasilva@prof.educacao.sp.gov.br",
+      "ANDRE LUIZ TAVARES": "andretavares@prof.educacao.sp.gov.br",
+      "ANDREIA MADUREIRA REIS": "andrmadu@prof.educacao.sp.gov.br",
+      "ANTONIO CARLOS DE OLIVEIRA": "acoliveira@prof.educacao.sp.gov.br",
+      "ANTONIO RAMOS DE ARAUJO": "araujoramos@prof.educacao.sp.gov.br",
+      "APARECIDA DE LOURDES GOMES": "cidalourdes@prof.educacao.sp.gov.br",
+      "CAROLINA PERNOMIAN PARUSSOLO": "carolinaparussolo@prof.educacao.sp.gov.br",
+      "CASSIA OLIVEIRA ANTONIAZI": "cassiaantoniazi@prof.educacao.sp.gov.br",
+      "CELIA REGINA DE OLIVEIRA LIMA": "celiaregina@prof.educacao.sp.gov.br",
+      "CRISTIANE APARECIDA DE SOUZA": "cristianesouza@prof.educacao.sp.gov.br",
+      "CRISTIANE DE LIMA ARAUJO": "cristianearaujo@prof.educacao.sp.gov.br",
+      "DANIEL DE FREITAS ALMEIDA": "danielfreitas@prof.educacao.sp.gov.br",
+      "DANIEL LOPES BARBOSA": "daniellopes@prof.educacao.sp.gov.br",
+      "DANIELA FERREIRA LIMA": "danielaflima@prof.educacao.sp.gov.br",
+      "EDIANE VIEIRA DA SILVA": "edianesilva@prof.educacao.sp.gov.br",
+      "EDSON DIONISIO DOS SANTOS": "edsondionisio@prof.educacao.sp.gov.br",
+      "EDUARDO HENRIQUE DA FONSECA": "eduardofonseca@prof.educacao.sp.gov.br",
+      "ELIANE SANTOS SILVA": "elianessilva@prof.educacao.sp.gov.br",
+      "ELIAS MONTEIRO DA SILVA": "eliasmonteiro@prof.educacao.sp.gov.br",
+      "ELISABETE APARECIDA PIRES": "elisabetepires@prof.educacao.sp.gov.br",
+      "EUZELI ARAUJO DE OLIVEIRA": "euzeliaraujo@prof.educacao.sp.gov.br",
+      "FABIO CAMILO": "fabiocamilo@prof.educacao.sp.gov.br",
+      "FATIMA APARECIDA GOMES DE OLIVEIRA": "fatimaaparecida@prof.educacao.sp.gov.br",
+      "FLAVIA DE OLIVEIRA LIMA": "flaviaoliveiralima@prof.educacao.sp.gov.br",
+      "GENILTON DE OLIVEIRA SILVA": "genilton@prof.educacao.sp.gov.br",
+      "GISELE CRISTINA DOS SANTOS": "giselesantos@prof.educacao.sp.gov.br",
+      "GISELE MARIA DE OLIVEIRA": "giselemariadeoliveira@prof.educacao.sp.gov.br",
+      "GLEICE KELLY VICENTE": "gleicevicente@prof.educacao.sp.gov.br",
+      "GRACILENE APARECIDA VIEIRA": "gracilenevieira@prof.educacao.sp.gov.br",
+      "HELEN ROSE DE PAULA": "helenrose@prof.educacao.sp.gov.br",
+      "INGRYD CAROLINA SUGUIMOTO VIEIRA": "ingrydvieira@prof.educacao.sp.gov.br",
+      "JANINA DOS PASSOS BRAGA DE ALMEIDA": "janinaalmeida@prof.educacao.sp.gov.br",
+      "JAQUELINE DE OLIVEIRA SANTOS": "jaquelineoliveira@prof.educacao.sp.gov.br",
+      "JOAO BATISTA DA SILVA": "joaobatista@prof.educacao.sp.gov.br",
+      "JOAO PAULO DE OLIVEIRA": "joaopaulo@prof.educacao.sp.gov.br",
+      "JOSE ROBERTO DE SOUZA": "joserobertosouza@prof.educacao.sp.gov.br",
+      "JUAREZ GOMES DE MAGALHAES FILHO": "juarezmagalhaes@prof.educacao.sp.gov.br",
+      "JULIANA DE FATIMA GOMES": "julianagomes@prof.educacao.sp.gov.br",
+      "KATIUSCIA ALVES BOMFIM": "katiusciabomfim@prof.educacao.sp.gov.br",
+      "LEANDRO DE PAULA": "leandropaula@prof.educacao.sp.gov.br",
+      "LUANA CAROLINE ALVES LIMA": "luanalima@prof.educacao.sp.gov.br",
+      "LUCIANA NOVAIS CORREIA SANTOS": "luciananovais@prof.educacao.sp.gov.br",
+      "LUCIANO MOREIRA DE AZEVEDO": "lucianoazevedo@prof.educacao.sp.gov.br",
+      "LUIZ CARLOS DE OLIVEIRA": "luizcarlosoliveira@prof.educacao.sp.gov.br",
+      "MARCIEL DA SILVA": "marcielsilva@prof.educacao.sp.gov.br",
+      "MARCIO LUIS DE SOUZA": "marcioluis@prof.educacao.sp.gov.br",
+      "MARCOS ROBERTO DE OLIVEIRA": "marcosroberto@prof.educacao.sp.gov.br",
+      "MARIA APARECIDA DE SOUZA": "mariaaparecidasouza@prof.educacao.sp.gov.br",
+      "MARIA DE FATIMA GOMES": "mariagomes@prof.educacao.sp.gov.br",
+      "MARINA DA CONCEICAO FRANCISCO SILVA": "marinasilva@prof.educacao.sp.gov.br",
+      "MAURICIO DE BARROS SANTOS": "mauriciosantos@prof.educacao.sp.gov.br",
+      "MOISES ANTONIO DE BARROS": "moisesbarros@prof.educacao.sp.gov.br",
+      "PATRICIA GOMES ROCHA RIBEIRO": "patriciag@prof.educacao.sp.gov.br",
+      "PAULO ROBERTO DA SILVA ITO": "pauloito@prof.educacao.sp.gov.br",
+      "PEDRO ZANOTTI FILHO": "pedrozanotti@prof.educacao.sp.gov.br",
+      "RAUL PEREIRA VILERA JUNIOR": "vilera@prof.educacao.sp.gov.br",
+      "REGIANE CURTI DE SOUZA OLIVEIRA": "regianecurti@prof.educacao.sp.gov.br",
+      "REGINA DA SILVA CASTRO": "reginasilvacastro@prof.educacao.sp.gov.br",
+      "RICARDO AMERICO DA SILVA": "ricardoamerico@prof.educacao.sp.gov.br",
+      "ROBERTO SALGADO": "robertosalgado@prof.educacao.sp.gov.br",
+      "RODRIGO VIEIRA": "rodrigovieira1@prof.educacao.sp.gov.br",
+      "ROSANGELA CAFASSO MOREIRA": "cafasso@prof.educacao.sp.gov.br",
+      "ROSIMERY DE SOUZA PESSOA": "rosimerypessoa@prof.educacao.sp.gov.br",
+      "ROSMARA DA SILVA CARDOSO": "rosmaracardoso@prof.educacao.sp.gov.br",
+      "SANDRA CRISTINA MACEDO MORAES": "sandracristinamacedo@prof.educacao.sp.gov.br",
+      "SELMA GOMES DA SILVA": "selmagomess@prof.educacao.sp.gov.br",
+      "SERGIO AGRIPINO VILLA NOVA": "sergioagripino@prof.educacao.sp.gov.br",
+      "SOLANGE ALMEIDA DA SILVA": "almeidafazio@prof.educacao.sp.gov.br",
+      "SUELI SILVE PEREIRA": "suelisilve@prof.educacao.sp.gov.br",
+      "SUZINEIDE SILVA DE FREITAS": "suzineidefreitas@prof.educacao.sp.gov.br",
+      "THIAGO FABIANO BRITO": "thiagofabiano@prof.educacao.sp.gov.br",
+      "TITTO AUGUSTO NASCIMENTO SILVA": "titto@prof.educacao.sp.gov.br",
+      "VANDERSON HYPPOLITO": "vhypolito@prof.educacao.sp.gov.br",
+      "VANESSA IVETE GOMES DOS SANTOS": "vanessaivete@prof.educacao.sp.gov.br",
+      "VANIA PENHA DE BARROS": "vaniapenha@prof.educacao.sp.gov.br",
+      "VIVIANE LEAL CAMERA DE MORAES": "camera@prof.educacao.sp.gov.br",
+      "WILSON LUIZ DE SOUZA COSTA": "wilsonluizsouza@prof.educacao.sp.gov.br",
+      "WILSON RODRIGUES MOTA": "wmota@prof.educacao.sp.gov.br"
+    };
+
+    // Dados dos aparelhos
+    const marcas = {
+      "TABLET": "POSITIVO",
+      "SMARTPHONE": "POSITIVO",
+      "CHROMEBOOK": "SAMSUNG",
+      "NOTEBOOK": "POSITIVO"
+    };
+
+    // Horários dos professores (organizados por dias da semana)
+    const horariosProfessores = {
+      "ADEMAR RIBEIRO DE SOUZA": {
+        "SEG": ["1D", "1E", "1E", "9A", "9A", "9C", "9C", "9D", "9A"],
+        "TER": ["1F", "1F", "1B", "9D", "2F", "2H", "1H", "1H"],
+        "QUA": ["1B", "1A", "1A"],
+        "QUI": ["1D", "1C", "1C", "9B", "9D"],
+        "SEX": ["9C", "9B", "9B", "1G", "1G", "2F", "2G", "2G", "2H"],
+      },
+      "ALISON VASCONCELOS BESERRA": {
+        "SEG": ["6A", "6D", "6B", "1F", "6A", "6A"],
+        "TER": ["1D", "6C", "1B"],
+        "QUA": ["1B/BIO", "3C/PV", "6C/CIÊ", "1E/BIO", "8A", "8A", "7E/PV", "7C/PV"],
+        "QUI": ["6B", "6B", "1C", "6C", "1F", "6D", "8A", "8A", "7D/PV"],
+        "SEX": ["1E", "1A", "1A", "1C", "6D/C", "1D"],
+      },
+      "ANDRE LUIZ TAVARES": {
+        "SEG": ["X", "X", "X", "X", "X"],
+        "TER": ["X", "X", "X", "X", "X"],
+        "QUA": ["X", "X", "X", "X", "X"],
+        "QUI": ["X", "X", "X", "X", "X"],
+        "SEX": ["X", "X", "X", "X", "X"],
+      },
+      "ANDREIA MADUREIRA REIS": {
+        "SEG": ["1E", "1F", "1D", "2C", "1C", "2D"],
+        "TER": ["1F/R", "1D", "1F", "1E", "1C", "1F/R"],
+        "QUA": ["2C/R", "1D", "1C", "1C", "1E", "1C/R"],
+        "QUI": ["1D/R", "1E", "1B/R", "1E/R", "1D/R", "1F"],
+        "SEX": ["2D/R", "1E", "1C", "1F", "1D", "1B/R"],
+      },
+      "ANTONIO RAMOS DE ARAUJO": {
+        "QUI": ["3G", "2F", "2F", "2G", "2G"],
+        "SEX": ["3G", "2H", "2H", "1I", "1I"],
+      },
+      "ANTONIO CARLS DE OLIVEIRA": {
+        "SEG": ["2B", "2B", "2E", "2E"],
+        "TER": ["2C", "2C", "2D", "2D", "2A"],
+        "QUA": ["2D", "2D", "2E", "2E"],
+        "QUI": ["2A", "2A"],
+        "SEX": ["2C", "2C", "2A", "2B", "2B"],
+      },
+      "ELISABETE APARECIDA PIRES": {
+        "SEG": ["1A", "1A", "1A", "1E", "1B", "1B"],
+        "TER": ["1E/EF", "1E/EF", "1D", "1D", "1B", "1A"],
+        "QUA": ["1C/EF", "1C/EF", "1E", "1E", "1D/EF", "1D/EF"],
+        "QUI": ["1C", "1C", "1E", "1B", "1A/EF", "1A/EF"],
+        "SEX": ["1B/EF", "1B/EF", "1D", "1D", "1C", "1C", "1G", "1G"],
+      },
+      "CAROLINA PERNOMIAN PARUSSOLO": {
+        "SEG": ["1G", "1G", "7A", "7A"],
+        "TER": ["9D", "9D", "9A", "7B", "7B"],
+        "QUA": ["9C", "9C", "7B", "7A"],
+        "QUI": ["9A", "9B", "9B", "9C", "9D"],
+        "SEX": ["9B", "9C", "9D", "9B", "9A", "9A"],
+      },
+      "CASSIA OLIVEIRA ANTONIAZI": {
+        "SEG": ["8C", "8E", "8E", "8B", "8B", "8B"],
+        "TER": ["8D", "8D", "8B", "8C"],
+        "QUA": ["8D", "8D", "8E", "8E", "8C", "8C"],
+      },
+      "DANIEL DE FREITAS ALMEIDA": {
+        "SEG": ["6C", "6C", "2C", "6D", "3C", "3C", "6E", "6E"],
+        "TER": ["2ADM/H", "2ADM/H", "6A", "2C", "2D/L", "2D/L"],
+        "QUI": ["2D", "2D", "6D", "6A", "3B", "3B"],
+        "SEX": ["3A", "3A", "2C/L", "2C/L", "2E", "2E"],
+      },
+      "DANIEL LOPES BARBOSA": {
+        "SEG": ["9B", "9B", "9D", "1G", "1G"],
+        "TER": ["9A", "9B", "8E/EF", "8E/EF", "9C"],
+        "QUA": ["9A", "9D", "9D", "9B", "9B"],
+        "QUI": ["9C", "9A", "1G", "1G", "9C", "1H", "1H"],
+        "SEX": ["9A", "9A", "9C", "9C", "9D", "9D"],
+      },
+      "DANIELA FERREIRA LIMA": {
+        "SEG": ["1C", "1C", "6A", "6A", "6D", "6D", "", "7D", "7C", "9A", "7E", "7E", "7C"],
+        "TER": ["6B", "6B", "6C", "6C", "1D", "1D", "7D", "7B", "7B", "7A", "1G", "1G", "1H"],
+        "QUA": ["1A", "1A", "9D", "7A"],
+        "SEX": ["1F", "1F", "1B", "1B", "1E", "1E"],
+      },
+      "EDIANE VIEIRA DA SILVA": {
+        "SEG": ["7C", "7B", "6F/R", "6F/R", "9C/O", "9D/O", "3F", "3F", "2G", "2G", "2H"],
+        "TER": ["7B", "7D", "7C", "9B/OP", "6E/R", "9B/OP", "2G", "2F", "2F", "3E/OP", "3E/OP"],
+        "QUA": ["9C/OP", "7B", "2H", "2H", "2H", "2F", "2F"],
+        "QUI": ["2ADM", "2ADM", "2ADM", "6F", "7D", "9D/OP", "7D", "7C", "7D"],
+        "SEX": ["6E/R", "7C", "6F", "6F", "7B", "6F", "2G", "3G/OP", "3G/OP", "3D/OP", "3D/OP"],
+      },
+      "EDUARDO HENRIQUE DA FONSECA": {
+        "QUA": ["7C", "8B", "7D", "8B", "7D", "7C"],
+      },
+      "ELIANE SANTOS SILVA": {
+        "SEG": ["1G", "1G"],
+        "TER": ["6A", "6A", "2A", "2A", "2E", "2E"],
+        "QUA": ["6A", "3B/PV", "6B/PV", "6A/PV", "6B", "6D"],
+        "QUI": ["6C", "6C", "6C", "6B", "6B", "3A/PV"],
+        "SEX": ["6D", "2B", "2B", "6D/PV", "2C", "2C"],
+      },
+      "ELIAS MONTEIRO DA SILVA": {
+        "SEG": ["2E", "2E", "3B", "3B", "2C", "2C", "9B", "1H/Q", "1H/Q", "1H/EF", "1H/EF"],
+        "TER": ["1C", "1C", "2ADM/Q", "2ADM/Q", "3A", "3A"],
+        "QUA": ["2B", "2B", "1A", "1A", "2A", "1F", "9B/OM"],
+        "QUI": ["1B", "1B", "3C", "3C", "1E", "1E", "9A", "8E/PV", "9A", "8D/PV"],
+        "SEX": ["1D", "1D", "1F", "2A", "2D", "2D", "1G", "1G", "9C", "9C", "1H/F", "1H/F"],
+      },
+      "EUZELI ARAUJO DE OLIVEIRA": {
+        "SEG": ["3B", "1E", "1E", "2D", "2B"],
+        "QUA": ["1B", "1B", "1D", "1D", "1F"],
+        "QUI": ["1A", "1A", "2ADM", "2C", "2A"],
+        "SEX": ["1C", "1C", "2E", "3A", "1F"],
+      },
+      "FABIO CAMILO": {
+        "SEG": ["1I", "2F", "1I", "3D", "1I"],
+        "TER": ["3D", "3E", "2H", "2H", "2F"],
+        "QUA": ["2G", "3E", "2F", "2G", "3E"],
+        "QUI": ["2H", "3D", "2G", "1I", "2H"],
+        "SEX": ["3E", "3D", "2F", "2G"],
+      },
+      "GENILTON DE OLIVEIRA SILVA": {
+        "TER": ["7E", "7E"],
+        "QUA": ["7D", "6F", "7B/PV", "6E", "7F", "7D"],
+        "QUI": ["7C", "7C", "6F", "6F", "6E", "6E"],
+        "SEX": ["7C", "7E", "7A/PV", "7D", "7F", "7F"],
+      },
+      "INGRYD CAROLINA SUGUIMOTO VIEIRA": {
+        "SEG": ["8E", "8D", "8D", "8E", "6E", "6E"],
+        "TER": ["8C", "6F", "8D", "8D"],
+        "QUA": ["6F", "6E", "6E", "6F", "6F", "8E"],
+        "QUI": ["8C", "8C", "6E"],
+        "SEX": ["8E", "8C", "8C", "8E", "6F", "8D"],
+      },
+      "JANINA DOS PASSOS BRAGA DE ALMEIDA": {
+        "SEG": ["2ADM/B", "2ADM/B", "2B"],
+        "TER": ["2A", "2A", "2B"],
+        "QUA": ["3C/BIOT", "3C/BIOT", "2C", "2C"],
+        "QUI": ["3A", "3A", "3B", "3B", "3D", "3F", "3D"],
+        "SEX": ["2E", "2D", "2D", "2E", "3E", "3E", "3F"],
+      },
+      "JUAREZ GOMES DE MAGALHAES FILHO": {
+        "SEG": ["2H", "2H", "3F", "3E", "3E"],
+        "TER": ["3A", "3A", "3C", "3C", "2H/Q", "3D", "3D", "2G", "2G"],
+        "QUA": ["1E", "1E", "1F", "2F/FÍS", "2G", "2G", "1I", "1I"],
+        "QUI": ["1F", "1D", "1D"],
+        "SEX": ["3B", "3B", "1I", "1I", "3F", "2H/Q", "2F"],
+      },
+      "KATIUSCIA ALVES BOMFIM": {
+        "SEG": ["1A", "1A", "8A", "9C", "8B", "8C", "8E", "8E"],
+        "TER": ["7C", "7A", "7A", "7D", "7D", "8B"],
+        "QUA": ["9D", "9D", "9A", "9A", "7E", "7E"],
+        "QUI": ["7B", "9B", "9C", "7B", "9B", "8A"],
+        "SEX": ["8C", "7F", "7F", "8D", "8D", "7C"],
+      },
+      "LUANA CAROLINE ALVES LIMA": {
+        "SEG": ["9C", "7A", "7A", "9A", "9B", "9B"],
+        "TER": ["6D", "6B", "6A", "9C", "9C", "1G", "1G", "9D", "9D"],
+        "QUA": ["6C", "6D", "6C", "9A", "9B", "9B", "9C", "1G", "1G"],
+        "QUI": ["6A", "6B", "9D", "7A", "7A", "9D", "9A", "9A"],
+      },
+      "LUCIANA NOVAIS CORREIA SANTOS": {
+        "SEG": ["3G", "3G", "3D", "3F", "3F"],
+        "TER": ["1I", "1I", "3E", "3D", "3D"],
+        "QUA": ["3E", "3F", "3F", "3G", "3G"],
+        "QUI": ["3D", "1I", "1I", "3E", "3E"],
+      },
+      "LUCIANO MOREIRA DE AZEVEDO": {
+        "SEG": ["8A", "8A", "8D", "9A", "9C"],
+        "TER": ["7E", "8B", "9C", "7E"],
+        "QUA": ["8C", "9B", "8B", "9D"],
+        "QUI": ["7F", "7F", "8C", "7E", "9B"],
+        "SEX": ["7F", "9D", "8D", "9A", "8E", "8E"],
+      },
+      "MARCIEL DA SILVA": {
+        "SEG": ["7E", "7E", "7B", "9B/PV", "8C", "8C"],
+        "TER": ["9A/PV", "8E", "8E", "8A", "7C", "7D"],
+        "QUA": ["8C", "7D", "7F", "7F", "8D", "8D"],
+        "QUI": ["9C/PV", "8D", "8E", "8B", "8B", "7B"],
+        "SEX": ["8A", "8A", "8B", "7C", "7A", "7A", "3D", "3D"],
+      },
+      "MARINA DA CONCEICAO FRANCISCO SILVA": {
+        "SEG": ["6B", "6A", "6B/EF", "6B/EF"],
+        "TER": ["6D", "6D", "6D", "6B", "6A", "6B", "7A"],
+        "QUA": ["6C", "6C", "6C", "6B", "6A/EF", "6A/EF", "7A", "7A"],
+        "QUI": ["6D", "6D", "6A", "6D/EF", "6D/EF", "6A", "7A", "7B/EF", "7B/EF", "7A", "7A/EF", "7A/EF"],
+        "SEX": ["6C", "6C", "6A", "6B", "6C/EF", "6C/EF"],
+      },
+      "MAURICIO DE BARROS SANTOS": {
+        "SEG": ["2C/EF", "2A/EF", "2ADM/M.A", "2ADM/M.A", "2A/MAT"],
+        "TER": ["2C/EF", "2B/EF", "2ADM/M", "2ADM/M"],
+        "QUA": ["2A"],
+        "QUI": ["2A"],
+        "SEX": ["2A", "2A", "2ADM", "2ADM", "2ADM", "2B"],
+      },
+      "MOISES ANTONIO DE BARROS": {
+        "SEG": ["3E", "3E", "3G", "3G", "3D"],
+        "TER": ["3E/OM", "3G", "3G", "3F/OM", "3F/OM"],
+        "QUA": ["3G/OM", "3D/OM", "3D/OM", "3F", "3F"],
+        "QUI": ["2G/EF", "2G/EF", "3F/OM", "2F/EF", "2F/EF"],
+        "SEX": ["3F", "3F", "3G", "3G"],
+      },
+      "PAULO ROBERTO DA SILVA ITO": {
+        "SEG": ["2G", "1I", "2H", "2F"],
+        "TER": ["2E", "2E", "2E/L", "2E/L", "6E", "6F", "8C"],
+        "QUA": ["1F/FIL", "1F/FIL", "2D/OR", "2D/SOC", "2D/SOC", ""],
+        "QUI": ["2B", "2B", "2C/OR", "2E/OR", "2C", "2C"],
+        "SEX": ["2ADM", "2ADM", "1E/F", "1E/F", "2A/S", "2A/S", "2H", "2G", "2F"],
+      },
+      "PEDRO ZANOTTI FILHO": {
+        "QUI": ["6F", "6F", "3F", "3G", "3E", "3G", "1I"],
+        "SEX": ["1I", "3F", "3E"],
+      },
+      "REGINA DA SILVA CASTRO": {
+        "SEG": ["9D", "9D", "7C", "7C", "8D", "8D"],
+        "TER": ["9B", "9B", "9C", "9C", "9A", "9A"],
+        "QUA": ["8E/R", "8E/R", "1G/R", "1G/R", "6E", "6E"],
+        "QUI": ["7D/R", "6E", "6E", "8A/R", "8C/R", "8C/R"],
+        "SEX": ["1A", "1A", "7D", "7B", "7B", "8B", "8B", "8A"],
+      },
+      "ROBERTO SALGADO": {
+        "SEG": ["7E", "7F", "7C", "7D"],
+        "TER": ["7F", "7C", "7D", "7B", "7F", "7C", "3G"],
+        "QUA": ["7B", "7E", "7C", "7D", "7B", "7F", "1I/EF", "1I/EF", "3G/F", "2H/EF", "2H/EF"],
+        "QUI": ["7E", "7F", "7E"],
+        "SEX": ["7B", "7D", "7C", "7E", "7D", "7B"],
+      },
+      "RODRIGO VIEIRA": {
+        "SEG": ["1D", "1D", "1C", "1C", "1F", "1F", "", "3D", "2G", "2F", "2H", "3G"],
+        "TER": ["1B", "1B", "1A", "1A", "1E", "1E", "3F", "2G", "1I"],
+        "QUA": ["3D", "3G", "3E"],
+        "QUI": ["1I", "3F", "2H"],
+        "SEX": ["3E", "2F"],
+      },
+      "ROSANGELA CAFASSO MOREIRA": {
+        "SEG": ["1B", "1B", "2A", "2A", "2E", "2E"],
+        "TER": ["1A", "1A", "1C", "1C", "2B", "2B"],
+        "QUA": ["2A/PR", "2A/PR", "3A/PR", "3A/PR", "2C/Q", "2C/Q", "1G", "1G"],
+        "QUI": ["3B/EM", "3B/EM", "2D/QU", "2D/QU", "2B/PR", "2B/PR"],
+        "SEX": ["3B/P", "3B/P", "3A/EM", "3C/P", "3C/P", "3A/EM"],
+      },
+      "ROSMARA DA SILVA CARDOSO": {
+        "SEG": ["6C", "1B"],
+        "TER": ["6B", "6A", "1A", "6C"],
+        "QUA": ["6D", "6A", "6D", "6D", "1B", "6B"],
+        "QUI": ["6A", "6A", "6B", "1A", "6C", "1B"],
+        "SEX": ["1A", "6B", "6C", "1A", "1B", "6D"],
+      },
+      "SELMA GOMES DA SILVA": {
+        "SEG": ["1A", "1D", "1C"],
+        "TER": ["1G/F"],
+        "QUA": ["1B"],
+        "QUI": ["1A", "1C", "1B", "1D", "1G/F"],
+      },
+      "SUZINEIDE SILVA DE FREITAS": {
+        "SEG": ["1H", "2F", "2G"],
+        "TER": ["6F", "6F", "1I", "2H"],
+        "QUA": ["2ADM", "2ADM", "2B", "2B", "2E", "2E", "6E"],
+        "QUI": ["2C", "2C", "2A", "2A", "2D", "2D", "6E"],
+        "SEX": ["2ADM", "2ADM", "2ADM", "2ADM", "2ADM", "2ADM", "2ADM"],
+      },
+      "THIAGO FABIANO BRITO": {
+        "SEG": ["1H", "1H", "1I", "1I"],
+        "TER": ["1H", "1H", "1I", "1I"],
+        "QUA": ["1H", "1H", "1I", "1I"],
+        "QUI": ["1H", "1H", "1I", "1I"],
+        "SEX": ["1H", "1H", "1I", "1I"],
+      },
+      "VANDERSON HYPPOLITO": {
+        "SEG": ["3A", "3A", "3B", "3B", "3C", "3C"],
+        "TER": ["3A", "3A", "3B", "3B", "3C", "3C"],
+        "QUA": ["3A", "3A", "3B", "3B", "3C", "3C"],
+        "QUI": ["3A", "3A", "3B", "3B", "3C", "3C"],
+        "SEX": ["3A", "3A", "3B", "3B", "3C", "3C"],
+      },
+      "VIVIANE LEAL CAMERA DE MORAES": {
+        "SEG": ["6E", "6F", "6E", "6F"],
+        "TER": ["6E", "6F", "6E", "6F"],
+        "QUA": ["6E", "6F", "6E", "6F"],
+        "QUI": ["6E", "6F", "6E", "6F"],
+        "SEX": ["6E", "6F", "6E", "6F"],
+      },
+      "WILSON LUIZ DE SOUZA COSTA": {
+        "SEG": ["7A", "7A", "7B", "7B", "7C", "7C"],
+        "TER": ["7A", "7A", "7B", "7B", "7C", "7C"],
+        "QUA": ["7A", "7A", "7B", "7B", "7C", "7C"],
+        "QUI": ["7A", "7A", "7B", "7B", "7C", "7C"],
+        "SEX": ["7A", "7A", "7B", "7B", "7C", "7C"],
+      },
+      "WILSON RODRIGUES MOTA": {
+        "SEG": ["8A", "8B", "8C", "8D", "8E"],
+        "TER": ["8A", "8B", "8C", "8D", "8E"],
+        "QUA": ["8A", "8B", "8C", "8D", "8E"],
+        "QUI": ["8A", "8B", "8C", "8D", "8E"],
+        "SEX": ["8A", "8B", "8C", "8D", "8E"],
+      }
+    };
+
+    let agendamentos = [];
+    let editingId = null;
+
+    // Sistema de comunicação entre as sintaxes
+    function notificarSistemaReserva(agendamento) {
+      // Envia dados para o sistema de reserva via localStorage
+      const reservaData = {
+        id: agendamento.id,
+        data: agendamento.data,
+        professor: agendamento.professor,
+        aparelho: agendamento.aparelho,
+        aulas: agendamento.aulas,
+        timestamp: new Date().getTime()
+      };
+      
+      // Armazena no localStorage para comunicação entre sistemas
+      localStorage.setItem('novaReserva', JSON.stringify(reservaData));
+      
+      // Dispara evento customizado para notificar o sistema de reserva
+      window.dispatchEvent(new CustomEvent('novoAgendamento', { detail: reservaData }));
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // Inicialização dos componentes
+      const professorSelect = document.getElementById("professor");
+      const monthSelect = document.getElementById("monthSelect");
+      const yearSelect = document.getElementById("yearSelect");
+      const datepickerInput = document.getElementById("data-selecionada");
+      const datepickerPopup = document.getElementById("datepickerPopup");
+
+      // Preencher dropdown de professores
+      const professores = Object.keys(teacherEmails).sort();
+      professores.forEach(prof => {
+        const option = document.createElement("option");
+        option.value = prof;
+        option.textContent = prof;
+        professorSelect.appendChild(option);
+      });
+
+      // Preencher selects de mês e ano
+      const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+      meses.forEach((mes, index) => {
+        const option = document.createElement("option");
+        option.value = index;
+        option.textContent = mes;
+        monthSelect.appendChild(option);
+      });
+
+      const anoAtual = new Date().getFullYear();
+      for (let i = anoAtual - 5; i <= anoAtual + 5; i++) {
+        const option = document.createElement("option");
+        option.value = i;
+        option.textContent = i;
+        yearSelect.appendChild(option);
+      }
+
+      // Event listeners
+      monthSelect.addEventListener("change", renderCalendar);
+      yearSelect.addEventListener("change", renderCalendar);
+      datepickerInput.addEventListener("click", () => datepickerPopup.classList.toggle("active"));
+      document.getElementById("prevMonth").addEventListener("click", () => changeMonth(-1));
+      document.getElementById("nextMonth").addEventListener("click", () => changeMonth(1));
+
+      // Inicialização
+      loadAgendamentos();
+      setCurrentDate();
+      renderCalendar();
+      setupModal();
+    });
+
+    function setCurrentDate() {
+      const today = new Date();
+      document.getElementById("monthSelect").value = today.getMonth();
+      document.getElementById("yearSelect").value = today.getFullYear();
+    }
+
+    function renderCalendar() {
+      const month = parseInt(document.getElementById("monthSelect").value);
+      const year = parseInt(document.getElementById("yearSelect").value);
+      const calendarBody = document.getElementById("calendarBody");
+      calendarBody.innerHTML = "";
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      let date = 1;
+      for (let i = 0; i < 6; i++) {
+        const row = document.createElement("tr");
+        for (let j = 0; j < 7; j++) {
+          if (i === 0 && j < firstDay) {
+            const cell = document.createElement("td");
+            row.appendChild(cell);
+          } else if (date > daysInMonth) {
+            break;
+          } else {
+            const cell = document.createElement("td");
+            cell.textContent = date;
+            const currentDate = new Date(year, month, date);
+            const dateString = currentDate.toISOString().split("T")[0];
+
+            if (isDateBooked(dateString)) {
+              cell.classList.add("agendado");
+            } else {
+              cell.classList.add("disponivel");
+            }
+            
+            cell.addEventListener("click", () => {
+              document.getElementById("data-selecionada").value = `${String(date).padStart(2, '0')}/${String(month + 1).padStart(2, '0')}/${year}`;
+              document.querySelector(".datepicker-popup").classList.remove("active");
+              carregarAulasProfessor();
+            });
+
+            row.appendChild(cell);
+            date++;
+          }
+        }
+        calendarBody.appendChild(row);
+        if (date > daysInMonth) {
+          break;
+        }
+      }
+    }
+
+    function isDateBooked(dateString) {
+      return agendamentos.some(ag => ag.data === dateString && !ag.excluido);
+    }
+
+    function changeMonth(offset) {
+      const monthSelect = document.getElementById("monthSelect");
+      const yearSelect = document.getElementById("yearSelect");
+      let month = parseInt(monthSelect.value) + offset;
+      let year = parseInt(yearSelect.value);
+
+      if (month > 11) {
+        month = 0;
+        year++;
+      } else if (month < 0) {
+        month = 11;
+        year--;
+      }
+
+      monthSelect.value = month;
+      yearSelect.value = year;
+      renderCalendar();
+    }
+
+    function atualizarEmail() {
+      const professor = document.getElementById("professor").value;
+      const emailInput = document.getElementById("email-professor");
+      emailInput.value = teacherEmails[professor] || "";
+    }
+
+    function atualizarMarca() {
+      const aparelho = document.getElementById("aparelho").value;
+      const marcaInput = document.getElementById("marca");
+      marcaInput.value = marcas[aparelho] || "";
+    }
+
+    function carregarAulasProfessor() {
+      const professor = document.getElementById("professor").value;
+      const dataSelecionada = document.getElementById("data-selecionada").value;
+      const aulasContainer = document.getElementById("aulasProfessorContainer");
+      const loadingIndicator = document.getElementById("aulaLoading");
+
+      aulasContainer.innerHTML = "";
+      clearSelectedAulas();
+
+      if (!professor || !dataSelecionada) {
+        return;
+      }
+
+      loadingIndicator.style.display = "block";
+
+      setTimeout(() => {
+        const [dia, mes, ano] = dataSelecionada.split("/");
+        const data = new Date(ano, mes - 1, dia);
+        const diaSemana = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SAB"][data.getDay()];
+
+        const horarios = horariosProfessores[professor];
+        if (horarios && horarios[diaSemana]) {
+          const aulasDoDia = horarios[diaSemana];
+          const aulasPorPeriodo = {
+            "Manhã": [],
+            "Tarde": [],
+            "Noite": []
+          };
+
+          aulasDoDia.forEach(aula => {
+            const periodo = getPeriodoFromTurma(aula);
+            if (periodo) {
+              aulasPorPeriodo[periodo].push(aula);
+            }
+          });
+
+          for (const periodo in aulasPorPeriodo) {
+            if (aulasPorPeriodo[periodo].length > 0) {
+              const periodoDiv = document.createElement("div");
+              periodoDiv.className = "periodo-aulas";
+              
+              const titleDiv = document.createElement("div");
+              titleDiv.className = "periodo-title";
+              titleDiv.textContent = periodo;
+
+              const selectAllBtn = document.createElement("button");
+              selectAllBtn.textContent = "Selecionar Todos";
+              selectAllBtn.className = "select-all-btn";
+              selectAllBtn.onclick = () => selectAllAulas(periodo, aulasPorPeriodo[periodo]);
+              titleDiv.appendChild(selectAllBtn);
+
+              periodoDiv.appendChild(titleDiv);
+
+              const aulasGrid = document.createElement("div");
+              aulasGrid.className = "aulas-grid";
+
+              aulasPorPeriodo[periodo].forEach(aula => {
+                const aulaOption = document.createElement("div");
+                aulaOption.className = "aula-option";
+                aulaOption.textContent = aula;
+                aulaOption.dataset.aula = aula;
+                aulaOption.onclick = () => toggleAulaSelection(aulaOption);
+                aulasGrid.appendChild(aulaOption);
+              });
+              periodoDiv.appendChild(aulasGrid);
+              aulasContainer.appendChild(periodoDiv);
+            }
+          }
+        } else {
+          aulasContainer.textContent = "Nenhum horário encontrado para este professor neste dia.";
+        }
+        loadingIndicator.style.display = "none";
+      }, 500); // Simula um delay de carregamento
+    }
+
+    function getPeriodoFromTurma(turma) {
+      if (turma.includes("MANHA")) return "Manhã";
+      if (turma.includes("TARDE")) return "Tarde";
+      if (turma.includes("NOITE")) return "Noite";
+      // Casos especiais podem ser adicionados aqui
+      if (turma.match(/[1-6][A-Z]$/)) return "Manhã";
+      if (turma.match(/[7-9][A-Z]$/)) return "Tarde";
+      return "Manhã"; // Padrão
+    }
+
+    function toggleAulaSelection(element) {
+      element.classList.toggle("selected");
+      updateSelectedAulasList();
+    }
+
+    function selectAllAulas(periodo, aulas) {
+      aulas.forEach(aula => {
+        const aulaElement = document.querySelector(`.aula-option[data-aula="${aula}"]`);
+        if (aulaElement && !aulaElement.classList.contains("selected")) {
+          aulaElement.classList.add("selected");
+        }
+      });
+      updateSelectedAulasList();
+    }
+
+    function updateSelectedAulasList() {
+      const selectedAulasList = document.getElementById("selectedAulasList");
+      const selectedAulasContainer = document.getElementById("selectedAulasContainer");
+      selectedAulasList.innerHTML = "";
+      const selectedElements = document.querySelectorAll(".aula-option.selected");
+
+      if (selectedElements.length > 0) {
+        selectedAulasContainer.style.display = "block";
+        selectedElements.forEach(el => {
+          const aulaTag = document.createElement("div");
+          aulaTag.className = "selected-aula";
+          aulaTag.textContent = el.textContent;
+          aulaTag.onclick = () => {
+            el.classList.remove("selected");
+            updateSelectedAulasList();
+          };
+          selectedAulasList.appendChild(aulaTag);
+        });
+      } else {
+        selectedAulasContainer.style.display = "none";
+      }
+      checkConflict();
+    }
+
+    function clearSelectedAulas() {
+      document.getElementById("selectedAulasList").innerHTML = "";
+      document.getElementById("selectedAulasContainer").style.display = "none";
+      const selectedElements = document.querySelectorAll(".aula-option.selected");
+      selectedElements.forEach(el => el.classList.remove("selected"));
+    }
+
+    function checkConflict() {
+      const data = document.getElementById("data-selecionada").value;
+      const selectedAulas = Array.from(document.querySelectorAll(".aula-option.selected")).map(el => el.dataset.aula);
+      const conflictMessage = document.getElementById("conflictMessage");
+
+      if (!data || selectedAulas.length === 0) {
+        conflictMessage.style.display = "none";
+        return false;
+      }
+
+      const [dia, mes, ano] = data.split("/");
+      const dataFormatada = `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+
+      const hasConflict = agendamentos.some(ag => {
+        if (ag.excluido || ag.data !== dataFormatada) return false;
+        const agendamentoAulas = ag.aulas.split(", ");
+        return selectedAulas.some(aula => agendamentoAulas.includes(aula));
+      });
+
+      conflictMessage.style.display = hasConflict ? "block" : "none";
+      return hasConflict;
+    }
+
+    function cadastrarAgendamento() {
+      if (checkConflict()) {
+        alert("Conflito de agendamento detectado. Por favor, revise as aulas selecionadas.");
+        return;
+      }
+
+      const agendamento = {
+        id: new Date().getTime(),
+        professor: document.getElementById("professor").value,
+        email: document.getElementById("email-professor").value,
+        aparelho: document.getElementById("aparelho").value,
+        marca: document.getElementById("marca").value,
+        numAparelhos: document.getElementById("numero-aparelhos").value,
+        data: document.getElementById("data-selecionada").value.split("/").reverse().join("-"),
+        horaRetirada: document.getElementById("hora-retirada").value,
+        horaEntrega: document.getElementById("hora-entrega").value,
+        aulas: Array.from(document.querySelectorAll(".aula-option.selected")).map(el => el.dataset.aula).join(", "),
+        entregue: false,
+        excluido: false
+      };
+
+      if (!agendamento.professor || !agendamento.aparelho || !agendamento.data || !agendamento.aulas) {
+        alert("Por favor, preencha todos os campos obrigatórios.");
+        return;
+      }
+
+      agendamentos.push(agendamento);
+      saveAgendamentos();
+      
+      // Notifica o sistema de reserva sobre o novo agendamento
+      notificarSistemaReserva(agendamento);
+      
+      renderHistorico();
+      renderCalendar();
+      limparFormulario();
+      alert("Agendamento cadastrado com sucesso!");
+    }
+
+    function limparFormulario() {
+      document.getElementById("professor").selectedIndex = 0;
+      document.getElementById("email-professor").value = "";
+      document.getElementById("aparelho").selectedIndex = 0;
+      document.getElementById("marca").value = "";
+      document.getElementById("numero-aparelhos").value = 1;
+      document.getElementById("data-selecionada").value = "";
+      document.getElementById("hora-retirada").value = "";
+      document.getElementById("hora-entrega").value = "";
+      document.getElementById("aulasProfessorContainer").innerHTML = "";
+      clearSelectedAulas();
+      document.getElementById("conflictMessage").style.display = "none";
+    }
+
+    function renderHistorico() {
+      const historicoBody = document.getElementById("historico-body");
+      historicoBody.innerHTML = "";
+
+      const agendamentosVisiveis = agendamentos.filter(ag => !ag.excluido).sort((a, b) => new Date(b.data) - new Date(a.data));
+
+      agendamentosVisiveis.forEach(ag => {
+        const row = document.createElement("tr");
+        row.className = ag.entregue ? "entregue" : "nao-entregue";
+        row.innerHTML = `
+          <td>${ag.data.split('-').reverse().join('/')}</td>
+          <td>${ag.numAparelhos}</td>
+          <td>${ag.aparelho}</td>
+          <td>${ag.professor}</td>
+          <td>
+            <input type="checkbox" ${ag.entregue ? 'checked' : ''} onchange="toggleEntrega(${ag.id})">
+          </td>
+          <td class="action-icons">
+            <i class="fas fa-edit edit-icon" onclick="editarAgendamento(${ag.id})"></i>
+            <i class="fas fa-trash delete-icon" onclick="excluirAgendamento(${ag.id})"></i>
+          </td>
+        `;
+        historicoBody.appendChild(row);
+      });
+    }
+
+    function toggleEntrega(id) {
+      const agendamento = agendamentos.find(ag => ag.id === id);
+      if (agendamento) {
+        agendamento.entregue = !agendamento.entregue;
+        saveAgendamentos();
+        renderHistorico();
+      }
+    }
+
+    function editarAgendamento(id) {
+      editingId = id;
+      const agendamento = agendamentos.find(ag => ag.id === id);
+      if (agendamento) {
+        document.getElementById("editData").value = agendamento.data;
+        document.getElementById("editNumAparelhos").value = agendamento.numAparelhos;
+        document.getElementById("editAparelho").value = agendamento.aparelho;
+        document.getElementById("editProfessor").value = agendamento.professor;
+        document.getElementById("editAulas").value = agendamento.aulas;
+        document.getElementById("editModal").style.display = "block";
+      }
+    }
+
+    function salvarEdicao() {
+      const agendamento = agendamentos.find(ag => ag.id === editingId);
+      if (agendamento) {
+        agendamento.data = document.getElementById("editData").value;
+        agendamento.numAparelhos = document.getElementById("editNumAparelhos").value;
+        agendamento.aparelho = document.getElementById("editAparelho").value;
+        agendamento.professor = document.getElementById("editProfessor").value;
+        agendamento.aulas = document.getElementById("editAulas").value;
+        
+        saveAgendamentos();
+        
+        // Notifica o sistema de reserva sobre a alteração
+        notificarSistemaReserva(agendamento);
+        
+        renderHistorico();
+        renderCalendar();
+        fecharModal();
+        alert("Agendamento atualizado com sucesso!");
+      }
+    }
+
+    function excluirAgendamento(id) {
+      if (confirm("Tem certeza que deseja excluir este agendamento?")) {
+        const agendamento = agendamentos.find(ag => ag.id === id);
+        if (agendamento) {
+          agendamento.excluido = true;
+          saveAgendamentos();
+          
+          // Notifica o sistema de reserva sobre a exclusão
+          const exclusaoData = {
+            id: agendamento.id,
+            excluido: true,
+            timestamp: new Date().getTime()
+          };
+          localStorage.setItem('agendamentoExcluido', JSON.stringify(exclusaoData));
+          window.dispatchEvent(new CustomEvent('agendamentoExcluido', { detail: exclusaoData }));
+          
+          renderHistorico();
+          renderCalendar();
+        }
+      }
+    }
+
+    function setupModal() {
+      const modal = document.getElementById("editModal");
+      const span = document.getElementsByClassName("close")[0];
+      span.onclick = () => fecharModal();
+      window.onclick = (event) => {
+        if (event.target == modal) {
+          fecharModal();
+        }
+      };
+    }
+
+    function fecharModal() {
+      document.getElementById("editModal").style.display = "none";
+      editingId = null;
+    }
+
+    function saveAgendamentos() {
+      localStorage.setItem("agendamentos", JSON.stringify(agendamentos));
+    }
+
+    function loadAgendamentos() {
+      const data = localStorage.getItem("agendamentos");
+      if (data) {
+        agendamentos = JSON.parse(data);
+        renderHistorico();
+      }
+    }
+
+  </script>
+</body>
+</html>
